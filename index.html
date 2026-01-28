@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세계시간 TV</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="landing-container">
+        <header class="landing-header">
+            <h1>세계시간 TV</h1>
+            <p>TV에 세계시간과 사진 슬라이드를 표시하세요</p>
+        </header>
+
+        <div class="landing-buttons">
+            <a href="tv.html" class="landing-btn tv-btn">
+                <span class="btn-icon">📺</span>
+                <span class="btn-text">TV 화면 열기</span>
+                <span class="btn-desc">전체화면으로 슬라이드쇼 시작</span>
+            </a>
+
+            <a href="settings.html" class="landing-btn settings-btn">
+                <span class="btn-icon">⚙️</span>
+                <span class="btn-text">설정</span>
+                <span class="btn-desc">사진 추가/삭제, 전환 시간 설정</span>
+            </a>
+        </div>
+
+        <div class="landing-info">
+            <h2>사용 방법</h2>
+            <ol>
+                <li><strong>설정</strong>에서 사진 URL을 추가하고 전환 시간을 설정하세요</li>
+                <li><strong>TV 화면</strong> 링크를 TV 브라우저에서 열어주세요</li>
+                <li>5초 후 자동으로 전체화면이 됩니다</li>
+                <li>설정을 변경하면 TV에 실시간으로 반영됩니다</li>
+            </ol>
+        </div>
+    </div>
+
+    <style>
+        .landing-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .landing-header {
+            margin-bottom: 40px;
+        }
+
+        .landing-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #4da6ff;
+        }
+
+        .landing-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+
+        .landing-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .landing-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .landing-btn.tv-btn {
+            background: linear-gradient(135deg, #4da6ff, #2d7dd2);
+            color: #fff;
+        }
+
+        .landing-btn.settings-btn {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .landing-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .btn-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .btn-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .btn-desc {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .landing-info {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+        }
+
+        .landing-info h2 {
+            font-size: 16px;
+            color: #4da6ff;
+            margin-bottom: 16px;
+        }
+
+        .landing-info ol {
+            padding-left: 20px;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.8;
+        }
+
+        .landing-info li {
+            margin-bottom: 8px;
+        }
+
+        .landing-info strong {
+            color: #fff;
+        }
+    </style>
+</body>
+</html>

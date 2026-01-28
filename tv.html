@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>세계시간 TV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #tv-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        #world-map-slide {
+            z-index: 1;
+        }
+
+        #clocks-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .time-text {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-family: 'Pretendard', 'Malgun Gothic', 'Arial', sans-serif;
+            font-size: 1.4vw;
+            font-weight: 800;
+            color: #000;
+            line-height: normal;
+            text-shadow:
+                -2px -2px 0 #fff,
+                2px -2px 0 #fff,
+                -2px 2px 0 #fff,
+                2px 2px 0 #fff,
+                0 0 10px rgba(255,255,255,0.9);
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: #fff;
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+        }
+
+        #loading.hidden { display: none; }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #4da6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <p>로딩 중...</p>
+    </div>
+
+    <div id="tv-container">
+        <div id="world-map-slide" class="slide">
+            <img src="https://cdn.imweb.me/upload/S20221123700ca8cd5ea82/fa5b65761fcbb.jpg" alt="세계지도" class="slide-image">
+            <div id="clocks-layer"></div>
+        </div>
+        <div id="slides-container"></div>
+    </div>
+
+    <div id="status"></div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+        (function() {
+            const locations = [
+                { name: '대한민국', zone: 'Asia/Seoul', top: 54, left: 43.5 },
+                { name: '중국', zone: 'Asia/Shanghai', top: 50, left: 38 },
+                { name: '러시아', zone: 'Europe/Moscow', top: 34, left: 37 },
+                { name: '카자흐스탄', zone: 'Asia/Almaty', top: 45, left: 31 },
+                { name: '두바이', zone: 'Asia/Dubai', top: 60, left: 28 },
+                { name: '오스트레일리아', zone: 'Australia/Sydney', top: 73.5, left: 44 },
+                { name: '미국', zone: 'America/New_York', top: 48.5, left: 69 },
+                { name: '캐나다', zone: 'America/Toronto', top: 37, left: 67 },
+                { name: '그린란드', zone: 'America/Nuuk', top: 21, left: 82 },
+                { name: '브라질', zone: 'America/Sao_Paulo', top: 68, left: 79 },
+                { name: '아이슬란드', zone: 'Atlantic/Reykjavik', top: 33, left: 13 }
+            ];
+
+            let photos = [];
+            let intervalSeconds = 15;
+            let currentSlideIndex = 0;
+            let slideTimer = null;
+
+            const loadingEl = document.getElementById('loading');
+            const worldMapSlide = document.getElementById('world-map-slide');
+            const clocksLayer = document.getElementById('clocks-layer');
+            const slidesContainer = document.getElementById('slides-container');
+            const statusEl = document.getElementById('status');
+
+            async function init() {
+                initClocks();
+                await loadSettings();
+                buildSlides();
+                startSlideshow();
+                hideLoading();
+                requestFullscreen();
+
+                // 실시간 구독은 에러 무시
+                try {
+                    subscribeToRealtime();
+                } catch(e) {
+                    console.log('실시간 구독 실패:', e);
+                }
+            }
+
+            // Supabase에서 설정 불러오기
+            async function loadSettings() {
+                updateStatus('설정 로딩 중...');
+
+                try {
+                    const data = await loadSettingsFromDB();
+
+                    if (data) {
+                        intervalSeconds = data.interval_seconds || 15;
+                        photos = data.photos || [];
+                        updateStatus(`로드 완료: ${photos.length}장, ${intervalSeconds}초 간격`);
+                    } else {
+                        updateStatus('기본 설정 사용');
+                    }
+                } catch(e) {
+                    console.log('설정 로드 에러:', e);
+                    updateStatus('DB 연결 실패 - 기본 설정 사용');
+                }
+            }
+
+            // 실시간 변경 감지
+            function subscribeToRealtime() {
+                subscribeToChanges((newData) => {
+                    updateStatus('설정 변경 감지!');
+                    intervalSeconds = newData.interval_seconds || 15;
+                    photos = newData.photos || [];
+                    buildSlides();
+                    restartSlideshow();
+                    updateStatus(`업데이트: ${photos.length}장, ${intervalSeconds}초`);
+                });
+            }
+
+            function initClocks() {
+                locations.forEach((loc, index) => {
+                    const el = document.createElement('div');
+                    el.className = 'time-text';
+                    el.id = `clock-${index}`;
+                    el.style.top = loc.top + '%';
+                    el.style.left = loc.left + '%';
+                    clocksLayer.appendChild(el);
+                });
+                updateClocks();
+                setInterval(updateClocks, 1000);
+            }
+
+            function updateClocks() {
+                const now = new Date();
+                locations.forEach((loc, index) => {
+                    const el = document.getElementById(`clock-${index}`);
+                    if (el) {
+                        el.textContent = new Intl.DateTimeFormat('ko-KR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false,
+                            timeZone: loc.zone
+                        }).format(now);
+                    }
+                });
+            }
+
+            function buildSlides() {
+                slidesContainer.innerHTML = '';
+                photos.forEach((photo, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide photo-slide';
+                    slide.dataset.index = index;
+
+                    const img = document.createElement('img');
+                    img.src = photo.url;
+                    img.alt = `사진 ${index + 1}`;
+                    img.className = 'slide-image';
+
+                    slide.appendChild(img);
+                    slidesContainer.appendChild(slide);
+                });
+
+                currentSlideIndex = 0;
+                showSlide(0);
+            }
+
+            function showSlide(index) {
+                const totalSlides = 1 + photos.length;
+                if (index >= totalSlides) index = 0;
+                if (index < 0) index = totalSlides - 1;
+                currentSlideIndex = index;
+
+                worldMapSlide.classList.remove('active');
+                document.querySelectorAll('.photo-slide').forEach(s => s.classList.remove('active'));
+
+                if (index === 0) {
+                    worldMapSlide.classList.add('active');
+                } else {
+                    const target = document.querySelector(`.photo-slide[data-index="${index - 1}"]`);
+                    if (target) target.classList.add('active');
+                }
+            }
+
+            function startSlideshow() {
+                if (slideTimer) clearInterval(slideTimer);
+                slideTimer = setInterval(() => {
+                    showSlide(currentSlideIndex + 1);
+                }, intervalSeconds * 1000);
+            }
+
+            function restartSlideshow() {
+                startSlideshow();
+            }
+
+            function hideLoading() {
+                setTimeout(() => loadingEl.classList.add('hidden'), 1000);
+            }
+
+            function requestFullscreen() {
+                setTimeout(() => {
+                    const el = document.documentElement;
+                    try {
+                        if (el.requestFullscreen) el.requestFullscreen();
+                        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                    } catch (e) {}
+                }, 5000);
+            }
+
+            function updateStatus(msg) {
+                statusEl.textContent = msg;
+                console.log('[TV]', msg);
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설정 - 세계시간 TV</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="settings-page">
+    <div class="settings-container">
+        <header class="settings-header">
+            <a href="index.html" class="back-btn">← 돌아가기</a>
+            <h1>설정</h1>
+            <span id="sync-status" class="sync-status">연결 중...</span>
+        </header>
+
+        <!-- 전환 시간 설정 -->
+        <section class="settings-section">
+            <h2>슬라이드 전환 시간</h2>
+            <div class="interval-setting">
+                <label for="interval-input">자동 전환 간격 (초)</label>
+                <input type="number" id="interval-input" min="3" max="300" value="15">
+                <button id="save-interval-btn" class="btn btn-primary">저장</button>
+            </div>
+            <p class="hint">* 3초 ~ 300초 (5분) 사이 값 입력</p>
+        </section>
+
+        <!-- 사진 관리 -->
+        <section class="settings-section">
+            <h2>사진 슬라이드 관리</h2>
+
+            <!-- 사진 추가 -->
+            <div class="add-photo-section">
+                <h3>파일로 추가</h3>
+                <div class="add-photo-form">
+                    <input type="file" id="photo-file-input" accept="image/*" multiple>
+                    <button id="add-file-btn" class="btn btn-primary">업로드</button>
+                </div>
+                <p class="hint">* 여러 장 선택 가능 (Ctrl/Cmd + 클릭)</p>
+
+                <h3 style="margin-top: 20px;">URL로 추가</h3>
+                <div class="add-photo-form">
+                    <input type="text" id="photo-url-input" placeholder="이미지 URL을 입력하세요 (https://...)">
+                    <button id="add-url-btn" class="btn btn-primary">추가</button>
+                </div>
+            </div>
+
+            <!-- 사진 목록 -->
+            <div class="photo-list-section">
+                <h3>현재 사진 목록 (<span id="photo-count">0</span>장)</h3>
+                <p class="hint">* 세계지도는 항상 첫 번째로 표시됩니다</p>
+                <div id="photo-list" class="photo-list">
+                    <!-- 사진 목록이 여기에 동적으로 추가됨 -->
+                </div>
+                <p id="no-photos-msg" class="no-photos">추가된 사진이 없습니다</p>
+            </div>
+        </section>
+
+        <!-- 미리보기 -->
+        <section class="settings-section">
+            <h2>미리보기</h2>
+            <div class="preview-container">
+                <div id="preview-box" class="preview-box">
+                    <p>사진을 클릭하면 미리보기가 표시됩니다</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TV 링크 -->
+        <section class="settings-section">
+            <h2>TV에서 보기</h2>
+            <p class="hint">아래 링크를 TV 브라우저에서 열어주세요:</p>
+            <div class="tv-link-box">
+                <code id="tv-url">tv.html</code>
+                <button id="copy-url-btn" class="btn btn-primary">복사</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>
