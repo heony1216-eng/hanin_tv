@@ -5,7 +5,7 @@ const SUPABASE_URL = 'https://duezqoujpeoooyzucgvy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZXpxb3VqcGVvb295enVjZ3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NTk5NDgsImV4cCI6MjA4MzMzNTk0OH0.9cF2qa4HanWIjoNgqSs7PJELSDZny-vrS3n73t2ViDQ';
 
 // Supabase 클라이언트 생성
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 데이터베이스 테이블명
 const TABLE_NAME = 'tv_settings';
@@ -15,7 +15,7 @@ const TABLE_NAME = 'tv_settings';
 // 설정 불러오기
 async function loadSettingsFromDB() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('*')
             .eq('id', 1)
@@ -36,7 +36,7 @@ async function loadSettingsFromDB() {
 // 설정 저장하기
 async function saveSettingsToDB(settings) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .upsert({
                 id: 1,
@@ -60,7 +60,7 @@ async function saveSettingsToDB(settings) {
 
 // 실시간 변경 감지 (TV 페이지용)
 function subscribeToChanges(callback) {
-    return supabase
+    return supabaseClient
         .channel('tv_settings_changes')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: TABLE_NAME },
@@ -83,7 +83,7 @@ async function uploadImageToStorage(file) {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `photos/${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const { data, error } = await supabaseClient.storage
             .from(BUCKET_NAME)
             .upload(filePath, file, {
                 cacheControl: '3600',
@@ -96,7 +96,7 @@ async function uploadImageToStorage(file) {
         }
 
         // 공개 URL 생성
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = supabaseClient.storage
             .from(BUCKET_NAME)
             .getPublicUrl(filePath);
 
@@ -118,7 +118,7 @@ async function deleteImageFromStorage(filePath) {
             return true;
         }
 
-        const { error } = await supabase.storage
+        const { error } = await supabaseClient.storage
             .from(BUCKET_NAME)
             .remove([filePath]);
 
