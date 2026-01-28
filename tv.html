@@ -295,13 +295,19 @@
             }
 
             function requestFullscreen() {
-                setTimeout(() => {
+                // 화면 클릭 시 전체화면 (보안 정책상 자동 전체화면 불가)
+                document.body.addEventListener('click', () => {
                     const el = document.documentElement;
                     try {
-                        if (el.requestFullscreen) el.requestFullscreen();
-                        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                            if (el.requestFullscreen) el.requestFullscreen();
+                            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                        }
                     } catch (e) {}
-                }, 5000);
+                }, { once: true });
+
+                // 전체화면 안내 메시지 표시
+                updateStatus('화면을 클릭하면 전체화면이 됩니다');
             }
 
             function updateStatus(msg) {
