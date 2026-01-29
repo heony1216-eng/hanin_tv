@@ -134,12 +134,47 @@
             font-family: monospace;
             z-index: 100;
         }
+
+        /* 하단 현재시간 바 */
+        #time-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        #current-time {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        #current-date {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
     <div id="loading">
         <div class="loading-spinner"></div>
         <p>로딩 중...</p>
+    </div>
+
+    <!-- 상단 현재시간 바 -->
+    <div id="time-bar">
+        <span id="current-time">00:00:00</span>
+        <span id="current-date">2024년 1월 1일 월요일</span>
     </div>
 
     <div id="tv-container">
@@ -201,6 +236,8 @@
             const slidesContainer = document.getElementById('slides-container');
             const bgmPlayerEl = document.getElementById('bgm-player');
             const statusEl = document.getElementById('status');
+            const currentTimeEl = document.getElementById('current-time');
+            const currentDateEl = document.getElementById('current-date');
 
             async function init() {
                 initClocks();
@@ -312,6 +349,25 @@
 
             function updateClocks() {
                 const now = new Date();
+
+                // 상단 현재 시간 업데이트
+                currentTimeEl.textContent = new Intl.DateTimeFormat('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZone: 'Asia/Seoul'
+                }).format(now);
+
+                currentDateEl.textContent = new Intl.DateTimeFormat('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long',
+                    timeZone: 'Asia/Seoul'
+                }).format(now);
+
+                // 세계 시간 업데이트
                 locations.forEach((loc, index) => {
                     const el = document.getElementById(`clock-${index}`);
                     if (el) {
