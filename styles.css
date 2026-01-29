@@ -381,6 +381,60 @@ body {
     color: #fff;
 }
 
+.badge-youtube {
+    background: rgba(255, 0, 0, 0.9);
+    color: #fff;
+}
+
+/* YouTube 아이템 스타일 */
+.youtube-item {
+    position: relative;
+}
+
+.youtube-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 20px solid rgba(255, 255, 255, 0.8);
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    pointer-events: none;
+}
+
+/* BGM 상태 박스 */
+.bgm-status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bgm-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#bgm-current {
+    font-size: 14px;
+    color: #4da6ff;
+}
+
+#bgm-current a {
+    color: #4da6ff;
+    text-decoration: none;
+}
+
+#bgm-current a:hover {
+    text-decoration: underline;
+}
+
 .no-photos {
     color: rgba(255,255,255,0.5);
     font-size: 14px;

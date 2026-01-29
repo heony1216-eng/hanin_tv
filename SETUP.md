@@ -19,13 +19,15 @@ CREATE TABLE tv_settings (
     id INTEGER PRIMARY KEY DEFAULT 1,
     interval_seconds INTEGER DEFAULT 15,
     photos JSONB DEFAULT '[]'::jsonb,
+    youtube_videos JSONB DEFAULT '[]'::jsonb,
+    bgm_url TEXT DEFAULT '',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT single_row CHECK (id = 1)
 );
 
 -- 초기 데이터 삽입
-INSERT INTO tv_settings (id, interval_seconds, photos)
-VALUES (1, 15, '[]'::jsonb)
+INSERT INTO tv_settings (id, interval_seconds, photos, youtube_videos, bgm_url)
+VALUES (1, 15, '[]'::jsonb, '[]'::jsonb, '')
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS (Row Level Security) 비활성화 (공개 접근용)
@@ -33,6 +35,15 @@ ALTER TABLE tv_settings DISABLE ROW LEVEL SECURITY;
 
 -- 실시간 업데이트 활성화
 ALTER PUBLICATION supabase_realtime ADD TABLE tv_settings;
+```
+
+### 1-2b. 기존 테이블에 YouTube 컬럼 추가 (업그레이드용)
+이미 테이블이 있는 경우, 아래 SQL로 YouTube 컬럼만 추가:
+
+```sql
+-- YouTube 관련 컬럼 추가
+ALTER TABLE tv_settings ADD COLUMN IF NOT EXISTS youtube_videos JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE tv_settings ADD COLUMN IF NOT EXISTS bgm_url TEXT DEFAULT '';
 ```
 
 ### 1-3. Storage 버킷 생성 (사진 업로드용)

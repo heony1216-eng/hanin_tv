@@ -56,6 +56,49 @@
             </div>
         </section>
 
+        <!-- YouTube 동영상 슬라이드 -->
+        <section class="settings-section">
+            <h2>YouTube 동영상 슬라이드</h2>
+            <p class="hint" style="margin-bottom: 15px;">* 슬라이드로 YouTube 동영상을 추가할 수 있습니다. 동영상은 음소거 상태로 자동 재생됩니다.</p>
+
+            <div class="add-photo-section">
+                <h3>YouTube URL로 추가</h3>
+                <div class="add-photo-form">
+                    <input type="text" id="youtube-url-input" placeholder="YouTube URL (예: https://www.youtube.com/watch?v=...)">
+                    <button id="add-youtube-btn" class="btn btn-primary">추가</button>
+                </div>
+                <p class="hint">* youtube.com 또는 youtu.be 링크 모두 지원</p>
+            </div>
+
+            <!-- YouTube 목록 -->
+            <div class="photo-list-section">
+                <h3>현재 YouTube 목록 (<span id="youtube-count">0</span>개)</h3>
+                <div id="youtube-list" class="photo-list">
+                    <!-- YouTube 목록이 여기에 동적으로 추가됨 -->
+                </div>
+                <p id="no-youtube-msg" class="no-photos">추가된 YouTube 동영상이 없습니다</p>
+            </div>
+        </section>
+
+        <!-- YouTube 배경음악 -->
+        <section class="settings-section">
+            <h2>YouTube 배경음악 (BGM)</h2>
+            <p class="hint" style="margin-bottom: 15px;">* 모든 슬라이드에서 계속 재생되는 배경음악입니다. (영상 없이 소리만)</p>
+
+            <div class="add-photo-section">
+                <div class="add-photo-form">
+                    <input type="text" id="bgm-url-input" placeholder="YouTube URL (예: https://www.youtube.com/watch?v=...)">
+                    <button id="set-bgm-btn" class="btn btn-primary">설정</button>
+                    <button id="remove-bgm-btn" class="btn btn-danger">삭제</button>
+                </div>
+            </div>
+
+            <div id="bgm-status" class="bgm-status">
+                <span class="bgm-label">현재 BGM:</span>
+                <span id="bgm-current">없음</span>
+            </div>
+        </section>
+
         <!-- 미리보기 -->
         <section class="settings-section">
             <h2>미리보기</h2>

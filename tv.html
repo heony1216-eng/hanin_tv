@@ -44,6 +44,24 @@
             object-fit: contain;
         }
 
+        /* YouTube 슬라이드 */
+        .youtube-slide iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* BGM 플레이어 (숨김) */
+        #bgm-player {
+            position: fixed;
+            bottom: -1000px;
+            left: -1000px;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+            opacity: 0;
+        }
+
         #world-map-slide {
             z-index: 1;
         }
@@ -132,13 +150,26 @@
         <div id="slides-container"></div>
     </div>
 
+    <!-- BGM Player (hidden) -->
+    <div id="bgm-player"></div>
+
     <div id="status"></div>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
 
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <script>
+        // YouTube API 준비 완료 플래그
+        let ytApiReady = false;
+        function onYouTubeIframeAPIReady() {
+            ytApiReady = true;
+            console.log('[TV] YouTube API 준비 완료');
+        }
+
         (function() {
             const locations = [
                 { name: '대한민국', zone: 'Asia/Seoul', top: 54, left: 43.5 },
@@ -155,14 +186,20 @@
             ];
 
             let photos = [];
+            let youtubeVideos = [];
+            let bgmUrl = '';
             let intervalSeconds = 15;
             let currentSlideIndex = 0;
             let slideTimer = null;
+            let bgmPlayer = null;
+            let currentYTPlayer = null;  // 현재 재생 중인 YouTube 플레이어
+            let isYoutubeSlide = false;  // 현재 YouTube 슬라이드인지 여부
 
             const loadingEl = document.getElementById('loading');
             const worldMapSlide = document.getElementById('world-map-slide');
             const clocksLayer = document.getElementById('clocks-layer');
             const slidesContainer = document.getElementById('slides-container');
+            const bgmPlayerEl = document.getElementById('bgm-player');
             const statusEl = document.getElementById('status');
 
             async function init() {
@@ -191,7 +228,10 @@
                     if (data) {
                         intervalSeconds = data.interval_seconds || 15;
                         photos = data.photos || [];
-                        updateStatus(`로드 완료: ${photos.length}장, ${intervalSeconds}초 간격`);
+                        youtubeVideos = data.youtube_videos || [];
+                        bgmUrl = data.bgm_url || '';
+                        updateStatus(`로드 완료: 사진 ${photos.length}장, YouTube ${youtubeVideos.length}개`);
+                        setupBgm();
                     } else {
                         updateStatus('기본 설정 사용');
                     }
@@ -207,10 +247,54 @@
                     updateStatus('설정 변경 감지!');
                     intervalSeconds = newData.interval_seconds || 15;
                     photos = newData.photos || [];
+                    youtubeVideos = newData.youtube_videos || [];
+                    const newBgmUrl = newData.bgm_url || '';
+
+                    // BGM이 변경되었으면 업데이트
+                    if (newBgmUrl !== bgmUrl) {
+                        bgmUrl = newBgmUrl;
+                        setupBgm();
+                    }
+
                     buildSlides();
                     restartSlideshow();
-                    updateStatus(`업데이트: ${photos.length}장, ${intervalSeconds}초`);
+                    updateStatus(`업데이트: 사진 ${photos.length}장, YouTube ${youtubeVideos.length}개`);
                 });
+            }
+
+            // YouTube URL에서 비디오 ID 추출
+            function extractYoutubeId(url) {
+                const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
+                    /youtube\.com\/shorts\/([^&\?\/]+)/
+                ];
+                for (const pattern of patterns) {
+                    const match = url.match(pattern);
+                    if (match) return match[1];
+                }
+                return null;
+            }
+
+            // BGM 설정
+            function setupBgm() {
+                bgmPlayerEl.innerHTML = '';
+
+                if (!bgmUrl) {
+                    updateStatus('BGM 없음');
+                    return;
+                }
+
+                const videoId = extractYoutubeId(bgmUrl);
+                if (!videoId) return;
+
+                // YouTube iframe으로 BGM 재생 (자동재생, 반복, 음소거 해제)
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1`;
+                iframe.allow = 'autoplay; encrypted-media';
+                iframe.style.cssText = 'width: 1px; height: 1px;';
+                bgmPlayerEl.appendChild(iframe);
+
+                updateStatus('BGM 재생 중...');
             }
 
             function initClocks() {
@@ -244,10 +328,13 @@
 
             function buildSlides() {
                 slidesContainer.innerHTML = '';
+
+                // 사진 슬라이드 추가
                 photos.forEach((photo, index) => {
                     const slide = document.createElement('div');
                     slide.className = 'slide photo-slide';
                     slide.dataset.index = index;
+                    slide.dataset.type = 'photo';
 
                     const img = document.createElement('img');
                     img.src = photo.url;
@@ -258,35 +345,136 @@
                     slidesContainer.appendChild(slide);
                 });
 
+                // YouTube 슬라이드 추가
+                youtubeVideos.forEach((video, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide youtube-slide';
+                    slide.dataset.index = photos.length + index;
+                    slide.dataset.type = 'youtube';
+                    slide.dataset.videoId = video.videoId;
+
+                    // YouTube 플레이어용 div (IFrame API 사용)
+                    const playerDiv = document.createElement('div');
+                    playerDiv.id = `yt-player-${video.videoId}`;
+                    playerDiv.style.cssText = 'width: 100%; height: 100%;';
+
+                    slide.appendChild(playerDiv);
+                    slidesContainer.appendChild(slide);
+                });
+
                 currentSlideIndex = 0;
                 showSlide(0);
             }
 
             function showSlide(index) {
-                const totalSlides = 1 + photos.length;
+                const totalSlides = 1 + photos.length + youtubeVideos.length;
                 if (index >= totalSlides) index = 0;
                 if (index < 0) index = totalSlides - 1;
                 currentSlideIndex = index;
 
+                // 모든 슬라이드 비활성화
                 worldMapSlide.classList.remove('active');
                 document.querySelectorAll('.photo-slide').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.youtube-slide').forEach(s => {
+                    s.classList.remove('active');
+                });
+
+                // 기존 YouTube 플레이어 정리
+                if (currentYTPlayer) {
+                    try {
+                        currentYTPlayer.stopVideo();
+                        currentYTPlayer.destroy();
+                    } catch(e) {}
+                    currentYTPlayer = null;
+                }
 
                 if (index === 0) {
+                    // 세계지도 슬라이드
                     worldMapSlide.classList.add('active');
-                } else {
+                    isYoutubeSlide = false;
+                    startSlideshow();
+                } else if (index <= photos.length) {
+                    // 사진 슬라이드
                     const target = document.querySelector(`.photo-slide[data-index="${index - 1}"]`);
                     if (target) target.classList.add('active');
+                    isYoutubeSlide = false;
+                    startSlideshow();
+                } else {
+                    // YouTube 슬라이드
+                    const target = document.querySelector(`.youtube-slide[data-index="${index - 1}"]`);
+                    if (target) {
+                        target.classList.add('active');
+                        const videoId = target.dataset.videoId;
+
+                        // 타이머 중지 (영상 끝날 때까지 대기)
+                        if (slideTimer) clearInterval(slideTimer);
+                        isYoutubeSlide = true;
+
+                        // YouTube IFrame API로 플레이어 생성
+                        if (ytApiReady && videoId) {
+                            // 기존 플레이어 제거
+                            if (currentYTPlayer) {
+                                try { currentYTPlayer.destroy(); } catch(e) {}
+                            }
+
+                            const playerDiv = target.querySelector(`#yt-player-${videoId}`);
+                            if (playerDiv) {
+                                // 새 div 생성 (플레이어가 div를 대체하므로)
+                                playerDiv.id = `yt-player-${videoId}-${Date.now()}`;
+
+                                currentYTPlayer = new YT.Player(playerDiv.id, {
+                                    videoId: videoId,
+                                    width: '100%',
+                                    height: '100%',
+                                    playerVars: {
+                                        autoplay: 1,
+                                        mute: 1,
+                                        controls: 0,
+                                        showinfo: 0,
+                                        rel: 0,
+                                        modestbranding: 1,
+                                        loop: 0,  // 반복 안함 - 끝나면 다음 슬라이드로
+                                        playsinline: 1
+                                    },
+                                    events: {
+                                        onStateChange: function(event) {
+                                            // 영상 종료 시 (state = 0)
+                                            if (event.data === YT.PlayerState.ENDED) {
+                                                onYoutubeVideoEnd();
+                                            }
+                                        },
+                                        onError: function(event) {
+                                            console.log('YouTube 에러:', event.data);
+                                            onYoutubeVideoEnd();
+                                        }
+                                    }
+                                });
+                                updateStatus('YouTube 재생 중...');
+                            }
+                        }
+                    }
                 }
             }
 
             function startSlideshow() {
                 if (slideTimer) clearInterval(slideTimer);
-                slideTimer = setInterval(() => {
-                    showSlide(currentSlideIndex + 1);
-                }, intervalSeconds * 1000);
+                // YouTube 슬라이드가 아닐 때만 타이머 시작
+                if (!isYoutubeSlide) {
+                    slideTimer = setInterval(() => {
+                        showSlide(currentSlideIndex + 1);
+                    }, intervalSeconds * 1000);
+                }
             }
 
             function restartSlideshow() {
+                startSlideshow();
+            }
+
+            // YouTube 영상 종료 시 다음 슬라이드로
+            function onYoutubeVideoEnd() {
+                updateStatus('YouTube 영상 종료 - 다음 슬라이드');
+                isYoutubeSlide = false;
+                showSlide(currentSlideIndex + 1);
                 startSlideshow();
             }
 

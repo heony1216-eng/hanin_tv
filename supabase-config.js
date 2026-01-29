@@ -42,6 +42,8 @@ async function saveSettingsToDB(settings) {
                 id: 1,
                 interval_seconds: settings.intervalSeconds,
                 photos: settings.photos,
+                youtube_videos: settings.youtubeVideos || [],
+                bgm_url: settings.bgmUrl || '',
                 updated_at: new Date().toISOString()
             })
             .select();

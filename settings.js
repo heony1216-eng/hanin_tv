@@ -1,4 +1,4 @@
-// 세계시간 TV - 설정 페이지 (Supabase 연동 + Storage)
+// 세계시간 TV - 설정 페이지 (Supabase 연동 + Storage + YouTube)
 
 (function() {
     // DOM 요소
@@ -16,8 +16,23 @@
     const tvUrlEl = document.getElementById('tv-url');
     const copyUrlBtn = document.getElementById('copy-url-btn');
 
+    // YouTube DOM 요소
+    const youtubeUrlInput = document.getElementById('youtube-url-input');
+    const addYoutubeBtn = document.getElementById('add-youtube-btn');
+    const youtubeList = document.getElementById('youtube-list');
+    const noYoutubeMsg = document.getElementById('no-youtube-msg');
+    const youtubeCount = document.getElementById('youtube-count');
+
+    // BGM DOM 요소
+    const bgmUrlInput = document.getElementById('bgm-url-input');
+    const setBgmBtn = document.getElementById('set-bgm-btn');
+    const removeBgmBtn = document.getElementById('remove-bgm-btn');
+    const bgmCurrent = document.getElementById('bgm-current');
+
     // 상태
     let photos = [];
+    let youtubeVideos = [];
+    let bgmUrl = '';
     let intervalSeconds = 15;
 
     // 초기화
@@ -43,8 +58,12 @@
         if (data) {
             intervalSeconds = data.interval_seconds || 15;
             photos = data.photos || [];
+            youtubeVideos = data.youtube_videos || [];
+            bgmUrl = data.bgm_url || '';
             intervalInput.value = intervalSeconds;
             renderPhotoList();
+            renderYoutubeList();
+            updateBgmStatus();
             updateSyncStatus('연결됨', 'connected');
         } else {
             // 첫 실행 - 기본값으로 DB에 저장
@@ -59,7 +78,9 @@
 
         const success = await saveSettingsToDB({
             intervalSeconds: intervalSeconds,
-            photos: photos
+            photos: photos,
+            youtubeVideos: youtubeVideos,
+            bgmUrl: bgmUrl
         });
 
         if (success) {
@@ -300,6 +321,195 @@
         });
     }
 
+    // ===== YouTube 관련 함수 =====
+
+    // YouTube URL에서 비디오 ID 추출
+    function extractYoutubeId(url) {
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
+            /youtube\.com\/shorts\/([^&\?\/]+)/
+        ];
+
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) return match[1];
+        }
+        return null;
+    }
+
+    // YouTube 동영상 추가
+    async function addYoutubeVideo() {
+        const url = youtubeUrlInput.value.trim();
+
+        if (!url) {
+            alert('YouTube URL을 입력해주세요.');
+            return;
+        }
+
+        const videoId = extractYoutubeId(url);
+        if (!videoId) {
+            alert('올바른 YouTube URL이 아닙니다.\n(youtube.com 또는 youtu.be 링크를 입력해주세요)');
+            return;
+        }
+
+        // 중복 체크
+        if (youtubeVideos.some(v => v.videoId === videoId)) {
+            alert('이미 추가된 동영상입니다.');
+            return;
+        }
+
+        updateSyncStatus('추가 중...', 'loading');
+
+        youtubeVideos.push({
+            id: Date.now(),
+            videoId: videoId,
+            url: url
+        });
+
+        const success = await saveAllSettings();
+
+        if (success) {
+            renderYoutubeList();
+            youtubeUrlInput.value = '';
+            alert('YouTube 동영상이 추가되었습니다!');
+        } else {
+            youtubeVideos.pop();
+            alert('저장에 실패했습니다.');
+        }
+    }
+
+    // YouTube 동영상 삭제
+    async function deleteYoutubeVideo(id) {
+        if (!confirm('이 YouTube 동영상을 삭제하시겠습니까?')) return;
+
+        const index = youtubeVideos.findIndex(v => v.id === id);
+        if (index === -1) return;
+
+        const video = youtubeVideos[index];
+        updateSyncStatus('삭제 중...', 'loading');
+
+        youtubeVideos.splice(index, 1);
+        const success = await saveAllSettings();
+
+        if (success) {
+            renderYoutubeList();
+        } else {
+            youtubeVideos.splice(index, 0, video);
+            alert('삭제에 실패했습니다.');
+        }
+    }
+
+    // YouTube 목록 렌더링
+    function renderYoutubeList() {
+        youtubeList.innerHTML = '';
+        youtubeCount.textContent = youtubeVideos.length;
+
+        if (youtubeVideos.length === 0) {
+            noYoutubeMsg.style.display = 'block';
+            return;
+        }
+
+        noYoutubeMsg.style.display = 'none';
+
+        youtubeVideos.forEach((video, index) => {
+            const item = document.createElement('div');
+            item.className = 'photo-item youtube-item';
+
+            const thumbnail = document.createElement('img');
+            thumbnail.src = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
+            thumbnail.alt = `YouTube ${index + 1}`;
+
+            const badge = document.createElement('span');
+            badge.className = 'photo-badge badge-youtube';
+            badge.textContent = 'YouTube';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteYoutubeVideo(video.id);
+            };
+
+            item.appendChild(thumbnail);
+            item.appendChild(badge);
+            item.appendChild(deleteBtn);
+
+            // 클릭 시 새 탭에서 YouTube 열기
+            item.addEventListener('click', () => {
+                window.open(`https://www.youtube.com/watch?v=${video.videoId}`, '_blank');
+            });
+
+            youtubeList.appendChild(item);
+        });
+    }
+
+    // ===== BGM 관련 함수 =====
+
+    // BGM 설정
+    async function setBgm() {
+        const url = bgmUrlInput.value.trim();
+
+        if (!url) {
+            alert('YouTube URL을 입력해주세요.');
+            return;
+        }
+
+        const videoId = extractYoutubeId(url);
+        if (!videoId) {
+            alert('올바른 YouTube URL이 아닙니다.');
+            return;
+        }
+
+        updateSyncStatus('저장 중...', 'loading');
+        bgmUrl = url;
+
+        const success = await saveAllSettings();
+
+        if (success) {
+            updateBgmStatus();
+            bgmUrlInput.value = '';
+            alert('배경음악이 설정되었습니다!\nTV에서 재생됩니다.');
+        } else {
+            bgmUrl = '';
+            alert('저장에 실패했습니다.');
+        }
+    }
+
+    // BGM 삭제
+    async function removeBgm() {
+        if (!bgmUrl) {
+            alert('설정된 배경음악이 없습니다.');
+            return;
+        }
+
+        if (!confirm('배경음악을 삭제하시겠습니까?')) return;
+
+        updateSyncStatus('삭제 중...', 'loading');
+        const oldBgm = bgmUrl;
+        bgmUrl = '';
+
+        const success = await saveAllSettings();
+
+        if (success) {
+            updateBgmStatus();
+            alert('배경음악이 삭제되었습니다.');
+        } else {
+            bgmUrl = oldBgm;
+            alert('삭제에 실패했습니다.');
+        }
+    }
+
+    // BGM 상태 업데이트
+    function updateBgmStatus() {
+        if (bgmUrl) {
+            const videoId = extractYoutubeId(bgmUrl);
+            bgmCurrent.innerHTML = `<a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">재생 중인 BGM 보기</a>`;
+        } else {
+            bgmCurrent.textContent = '없음';
+        }
+    }
+
     // 이벤트 리스너
     function setupEventListeners() {
         saveIntervalBtn.addEventListener('click', saveInterval);
@@ -320,6 +530,19 @@
         });
 
         copyUrlBtn.addEventListener('click', copyTvUrl);
+
+        // YouTube 이벤트
+        addYoutubeBtn.addEventListener('click', addYoutubeVideo);
+        youtubeUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addYoutubeVideo();
+        });
+
+        // BGM 이벤트
+        setBgmBtn.addEventListener('click', setBgm);
+        removeBgmBtn.addEventListener('click', removeBgm);
+        bgmUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') setBgm();
+        });
     }
 
     // 시작
