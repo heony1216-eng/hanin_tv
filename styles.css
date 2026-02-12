@@ -360,6 +360,22 @@ body {
     opacity: 1;
 }
 
+/* 드래그 앤 드롭 */
+.photo-item[draggable="true"] {
+    cursor: grab;
+}
+
+.photo-item.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+
+.photo-item.drag-over {
+    outline: 2px dashed #4da6ff;
+    outline-offset: -2px;
+    transform: scale(1.05);
+}
+
 /* 사진 타입 배지 */
 .photo-badge {
     position: absolute;

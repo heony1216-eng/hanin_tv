@@ -239,6 +239,9 @@
         }
     }
 
+    // 드래그 앤 드롭 상태
+    let draggedIndex = null;
+
     // 사진 목록 렌더링
     function renderPhotoList() {
         photoList.innerHTML = '';
@@ -254,10 +257,52 @@
         photos.forEach((photo, index) => {
             const item = document.createElement('div');
             item.className = 'photo-item';
+            item.draggable = true;
+            item.dataset.index = index;
+
+            // 드래그 이벤트
+            item.addEventListener('dragstart', (e) => {
+                draggedIndex = index;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                document.querySelectorAll('.photo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                draggedIndex = null;
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (draggedIndex !== null && draggedIndex !== index) {
+                    item.classList.add('drag-over');
+                }
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drag-over');
+            });
+
+            item.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                item.classList.remove('drag-over');
+                if (draggedIndex === null || draggedIndex === index) return;
+
+                // 배열에서 위치 변경
+                const [moved] = photos.splice(draggedIndex, 1);
+                photos.splice(index, 0, moved);
+                draggedIndex = null;
+
+                renderPhotoList();
+                await saveAllSettings();
+            });
 
             const img = document.createElement('img');
             img.src = photo.url;
             img.alt = `사진 ${index + 1}`;
+            img.draggable = false;
             img.onerror = function() {
                 this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><rect fill="%23333" width="100" height="60"/><text y="35" x="50" text-anchor="middle" fill="%23888" font-size="10">Error</text></svg>';
             };
