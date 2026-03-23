@@ -46,7 +46,8 @@
     function updateTvUrl() {
         const currentUrl = window.location.href;
         const baseUrl = currentUrl.replace(/\/[^\/]*$/, '/');
-        tvUrlEl.textContent = baseUrl + 'tv.html';
+        const tvPage = (window.SETTINGS_ID === 2) ? 'tv2.html' : 'tv.html';
+        tvUrlEl.textContent = baseUrl + tvPage;
     }
 
     // 설정 불러오기

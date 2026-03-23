@@ -10,6 +10,9 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // 데이터베이스 테이블명
 const TABLE_NAME = 'tv_settings';
 
+// 설정 ID (기본값 1: 부평, 2: 강화)
+const SETTINGS_ID = window.SETTINGS_ID || 1;
+
 // ===== 데이터베이스 함수 =====
 
 // 설정 불러오기
@@ -18,7 +21,7 @@ async function loadSettingsFromDB() {
         const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('*')
-            .eq('id', 1)
+            .eq('id', SETTINGS_ID)
             .single();
 
         if (error) {
@@ -39,7 +42,7 @@ async function saveSettingsToDB(settings) {
         const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .upsert({
-                id: 1,
+                id: SETTINGS_ID,
                 interval_seconds: settings.intervalSeconds,
                 photos: settings.photos,
                 youtube_videos: settings.youtubeVideos || [],

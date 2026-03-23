@@ -14,17 +14,33 @@
         </header>
 
         <div class="landing-buttons">
-            <a href="tv.html" class="landing-btn tv-btn">
-                <span class="btn-icon">📺</span>
-                <span class="btn-text">TV 화면 열기</span>
-                <span class="btn-desc">전체화면으로 슬라이드쇼 시작</span>
-            </a>
+            <div class="location-group">
+                <h3 class="location-title">부평사무소</h3>
+                <div class="location-btns">
+                    <a href="tv.html" class="landing-btn tv-btn">
+                        <span class="btn-icon">📺</span>
+                        <span class="btn-text">TV 열기</span>
+                    </a>
+                    <a href="settings.html" class="landing-btn settings-btn">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">설정</span>
+                    </a>
+                </div>
+            </div>
 
-            <a href="settings.html" class="landing-btn settings-btn">
-                <span class="btn-icon">⚙️</span>
-                <span class="btn-text">설정</span>
-                <span class="btn-desc">사진 추가/삭제, 전환 시간 설정</span>
-            </a>
+            <div class="location-group">
+                <h3 class="location-title">강화트레이닝센터</h3>
+                <div class="location-btns">
+                    <a href="tv2.html" class="landing-btn tv-btn">
+                        <span class="btn-icon">📺</span>
+                        <span class="btn-text">TV 열기</span>
+                    </a>
+                    <a href="settings2.html" class="landing-btn settings-btn">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">설정</span>
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div class="landing-info">
@@ -64,15 +80,34 @@
         .landing-buttons {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 24px;
             margin-bottom: 40px;
         }
 
+        .location-group {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .location-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 14px;
+        }
+
+        .location-btns {
+            display: flex;
+            gap: 12px;
+        }
+
         .landing-btn {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 24px;
+            padding: 20px 16px;
             border-radius: 12px;
             text-decoration: none;
             transition: all 0.3s ease;
@@ -84,8 +119,10 @@
         }
 
         .landing-btn.settings-btn {
+            position: static;
             background: rgba(255,255,255,0.1);
             color: #fff;
+            z-index: auto;
         }
 
         .landing-btn:hover {
@@ -94,19 +131,13 @@
         }
 
         .btn-icon {
-            font-size: 36px;
-            margin-bottom: 8px;
+            font-size: 32px;
+            margin-bottom: 6px;
         }
 
         .btn-text {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .btn-desc {
-            font-size: 13px;
-            opacity: 0.8;
         }
 
         .landing-info {
