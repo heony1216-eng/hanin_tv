@@ -44,6 +44,7 @@
 
     // TV URL 표시 (GitHub Pages 대응)
     function updateTvUrl() {
+        if (!tvUrlEl) return;
         const currentUrl = window.location.href;
         const baseUrl = currentUrl.replace(/\/[^\/]*$/, '/');
         const tvPage = (window.SETTINGS_ID === 3) ? 'tv3.html' : (window.SETTINGS_ID === 2) ? 'tv2.html' : 'tv.html';
@@ -61,8 +62,8 @@
             photos = data.photos || [];
             youtubeVideos = data.youtube_videos || [];
             bgmUrl = data.bgm_url || '';
-            intervalInput.value = intervalSeconds;
-            renderPhotoList();
+            if (intervalInput) intervalInput.value = intervalSeconds;
+            if (photoList) renderPhotoList();
             renderYoutubeList();
             updateBgmStatus();
             updateSyncStatus('연결됨', 'connected');
@@ -558,35 +559,35 @@
 
     // 이벤트 리스너
     function setupEventListeners() {
-        saveIntervalBtn.addEventListener('click', saveInterval);
-        intervalInput.addEventListener('keypress', (e) => {
+        if (saveIntervalBtn) saveIntervalBtn.addEventListener('click', saveInterval);
+        if (intervalInput) intervalInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') saveInterval();
         });
 
-        addFileBtn.addEventListener('click', addPhotosByFile);
-        photoFileInput.addEventListener('change', () => {
+        if (addFileBtn) addFileBtn.addEventListener('click', addPhotosByFile);
+        if (photoFileInput) photoFileInput.addEventListener('change', () => {
             if (photoFileInput.files.length > 0) {
                 addPhotosByFile();
             }
         });
 
-        addUrlBtn.addEventListener('click', addPhotoByUrl);
-        photoUrlInput.addEventListener('keypress', (e) => {
+        if (addUrlBtn) addUrlBtn.addEventListener('click', addPhotoByUrl);
+        if (photoUrlInput) photoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addPhotoByUrl();
         });
 
-        copyUrlBtn.addEventListener('click', copyTvUrl);
+        if (copyUrlBtn) copyUrlBtn.addEventListener('click', copyTvUrl);
 
         // YouTube 이벤트
-        addYoutubeBtn.addEventListener('click', addYoutubeVideo);
-        youtubeUrlInput.addEventListener('keypress', (e) => {
+        if (addYoutubeBtn) addYoutubeBtn.addEventListener('click', addYoutubeVideo);
+        if (youtubeUrlInput) youtubeUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addYoutubeVideo();
         });
 
         // BGM 이벤트
-        setBgmBtn.addEventListener('click', setBgm);
-        removeBgmBtn.addEventListener('click', removeBgm);
-        bgmUrlInput.addEventListener('keypress', (e) => {
+        if (setBgmBtn) setBgmBtn.addEventListener('click', setBgm);
+        if (removeBgmBtn) removeBgmBtn.addEventListener('click', removeBgm);
+        if (bgmUrlInput) bgmUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') setBgm();
         });
     }
