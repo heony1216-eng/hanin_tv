@@ -63,12 +63,12 @@ async function saveSettingsToDB(settings) {
     }
 }
 
-// 실시간 변경 감지 (TV 페이지용)
+// 실시간 변경 감지 (TV 페이지용) - SETTINGS_ID별 필터링
 function subscribeToChanges(callback) {
     return supabaseClient
-        .channel('tv_settings_changes')
+        .channel(`tv_settings_changes_${SETTINGS_ID}`)
         .on('postgres_changes',
-            { event: '*', schema: 'public', table: TABLE_NAME },
+            { event: '*', schema: 'public', table: TABLE_NAME, filter: `id=eq.${SETTINGS_ID}` },
             (payload) => {
                 console.log('설정 변경 감지:', payload);
                 callback(payload.new);
