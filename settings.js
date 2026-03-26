@@ -46,7 +46,7 @@
     function updateTvUrl() {
         const currentUrl = window.location.href;
         const baseUrl = currentUrl.replace(/\/[^\/]*$/, '/');
-        const tvPage = (window.SETTINGS_ID === 2) ? 'tv2.html' : 'tv.html';
+        const tvPage = (window.SETTINGS_ID === 3) ? 'tv3.html' : (window.SETTINGS_ID === 2) ? 'tv2.html' : 'tv.html';
         tvUrlEl.textContent = baseUrl + tvPage;
     }
 
